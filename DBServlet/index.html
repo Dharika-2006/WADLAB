@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+  <head>
+    <title>DatabaseServlet</title>
+  </head>
+  <body>
+    <h2>Employee Records</h2>
+
+    <!-- READ (GET) -->
+    <form action="DBServlet" method="get">
+      <input type="submit" value="Display Records" />
+    </form>
+    <hr />
+
+    <!-- CREATE (POST) -->
+    <h3>Add Employee</h3>
+    <form action="DBServlet" method="post">
+      <input type="hidden" name="action" value="add" />
+      ID <input name="id" size="4" required /> Age
+      <input name="age" size="4" required /> First
+      <input name="first" required /> Last <input name="last" required />
+      <input type="submit" value="Add" />
+    </form>
+    <hr />
+
+    <!-- UPDATE (POST) : finds the row by ID, changes the rest -->
+    <h3>Update Employee</h3>
+    <form action="DBServlet" method="post">
+      <input type="hidden" name="action" value="update" />
+      ID <input name="id" size="4" required /> New Age
+      <input name="age" size="4" required /> New First
+      <input name="first" required /> New Last <input name="last" required />
+      <input type="submit" value="Update" />
+    </form>
+    <hr />
+
+    <!-- DELETE (POST) -->
+    <h3>Delete Employee</h3>
+    <form action="DBServlet" method="post">
+      <input type="hidden" name="action" value="delete" />
+      ID <input name="id" size="4" required />
+      <input type="submit" value="Delete" />
+    </form>
+  </body>
+</html>
