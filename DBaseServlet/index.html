@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <body>
+    <h3>Add student (POST)</h3>
+    <form action="Servlet" method="post">
+      Name: <input type="text" name="name" required /> Mark1:
+      <input type="number" name="m1" min="0" max="100" required /> Mark2:
+      <input type="number" name="m2" min="0" max="100" required /> Mark3:
+      <input type="number" name="m3" min="0" max="100" required />
+      <input type="submit" value="Calculate Grade" />
+    </form>
+
+    <h3>View students (GET)</h3>
+    <a href="Servlet">Show all students</a><br /><br />
+    ID: <input id="gid" type="number" />
+    <button
+      onclick="
+        location.href = 'Servlet?id=' + document.getElementById('gid').value
+      "
+    >
+      Show one
+    </button>
+
+    <h3>Update / Delete (PUT, DELETE)</h3>
+    ID: <input id="id" type="number" /> Name: <input id="name" /> M1:
+    <input id="m1" type="number" /> M2: <input id="m2" type="number" /> M3:
+    <input id="m3" type="number" />
+    <button onclick="update()">Update</button>
+    <button onclick="remove()">Delete</button>
+    <p id="result"></p>
+
+    <script>
+      const $ = (x) => document.getElementById(x);
+      const show = (r) => r.text().then((t) => ($("result").innerHTML = t));
+
+      // HTML forms can only send GET and POST, so PUT and DELETE use fetch()
+      function update() {
+        const q =
+          `id=${$("id").value}&name=${encodeURIComponent($("name").value)}` +
+          `&m1=${$("m1").value}&m2=${$("m2").value}&m3=${$("m3").value}`;
+        fetch("Servlet?" + q, { method: "PUT" }).then(show);
+      }
+      function remove() {
+        fetch("Servlet?id=" + $("id").value, { method: "DELETE" }).then(show);
+      }
+    </script>
+  </body>
+</html>
