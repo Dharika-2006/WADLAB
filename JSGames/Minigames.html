@@ -1,0 +1,220 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mini Games</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 16px;
+      }
+      .g {
+        display: grid;
+        gap: 4px;
+        margin: 8px 0;
+      }
+      .g button {
+        height: 50px;
+        font-size: 20px;
+      }
+      .on {
+        background: lightgreen;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Bingo</h2>
+    <button onclick="call()">Call number</button>
+    <button onclick="newBingo()">New card</button>
+    Last: <b id="last"></b> <b id="bmsg"></b>
+    <div
+      id="bingo"
+      class="g"
+      style="grid-template-columns: repeat(5, 60px)"
+    ></div>
+
+    <h2>Whack-a-Mole</h2>
+    <button onclick="startMole()">Start</button>
+    Score: <b id="score">0</b> Time: <b id="time">30</b>
+    <div
+      id="mole"
+      class="g"
+      style="grid-template-columns: repeat(3, 70px)"
+    ></div>
+
+    <h2>Memory Match</h2>
+    <button onclick="newMem()">New game</button>
+    Moves: <b id="moves">0</b>
+    <div
+      id="mem"
+      class="g"
+      style="grid-template-columns: repeat(4, 60px)"
+    ></div>
+
+    <h2>Tic-Tac-Toe</h2>
+    <button onclick="newTTT()">New game</button>
+    <b id="tmsg"></b>
+    <div
+      id="ttt"
+      class="g"
+      style="grid-template-columns: repeat(3, 60px)"
+    ></div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const nums = (n) => [...Array(n)].map((_, i) => i + 1);
+      const shuffle = (a) => a.sort(() => Math.random() - 0.5);
+
+      // builds n buttons inside element id; fn(i) runs when button i is clicked
+      function grid(id, n, fn) {
+        $(id).innerHTML = "";
+        return nums(n).map((_, i) => {
+          const b = document.createElement("button");
+          b.onclick = () => fn(i);
+          $(id).appendChild(b);
+          return b;
+        });
+      }
+
+      // ---------- BINGO ----------
+      let card, pool, called, marked, bc;
+      const L = []; // 12 winning lines
+      for (let i = 0; i < 5; i++)
+        L.push(
+          [0, 1, 2, 3, 4].map((c) => i * 5 + c),
+          [0, 1, 2, 3, 4].map((r) => r * 5 + i),
+        );
+      L.push([0, 6, 12, 18, 24], [4, 8, 12, 16, 20]);
+
+      function newBingo() {
+        card = shuffle(nums(75)).slice(0, 25); // 25 random numbers
+        card[12] = 0; // free centre
+        pool = shuffle(nums(75)); // numbers to be called
+        called = [];
+        marked = new Set([12]);
+        $("last").textContent = $("bmsg").textContent = "";
+        bc = grid("bingo", 25, (i) => {
+          if (i == 12 || !called.includes(card[i])) return; // only called numbers
+          marked.has(i) ? marked.delete(i) : marked.add(i);
+          bc[i].className = marked.has(i) ? "on" : "";
+          if (L.some((l) => l.every((k) => marked.has(k))))
+            $("bmsg").textContent = "BINGO!";
+        });
+        bc.forEach((b, i) => (b.textContent = card[i] || "FREE"));
+        bc[12].className = "on";
+      }
+      function call() {
+        if (!pool.length) return;
+        const n = pool.pop();
+        called.push(n);
+        $("last").textContent = n;
+      }
+
+      // ---------- WHACK-A-MOLE ----------
+      let score,
+        time,
+        pos = -1,
+        t1,
+        t2;
+      const mh = grid("mole", 9, (i) => {
+        if (i == pos) {
+          $("score").textContent = ++score;
+          mh[i].textContent = "";
+          pos = -1;
+        }
+      });
+      function startMole() {
+        clearInterval(t1);
+        clearInterval(t2);
+        score = 0;
+        time = 30;
+        $("score").textContent = 0;
+        $("time").textContent = 30;
+        t1 = setInterval(() => {
+          // new mole every 0.8 s
+          if (pos >= 0) mh[pos].textContent = "";
+          pos = Math.floor(Math.random() * 9);
+          mh[pos].textContent = "\u{1F439}";
+        }, 800);
+        t2 = setInterval(() => {
+          // countdown
+          $("time").textContent = --time;
+          if (time == 0) {
+            clearInterval(t1);
+            clearInterval(t2);
+            if (pos >= 0) mh[pos].textContent = "";
+            pos = -1;
+            alert("Score: " + score);
+          }
+        }, 1000);
+      }
+
+      // ---------- MEMORY MATCH ----------
+      let cards, open, lock, moves, mc;
+      function newMem() {
+        cards = shuffle([..."🍎🍌🍇🍒🍓🍊🥝🍉"].flatMap((x) => [x, x]));
+        open = [];
+        lock = false;
+        moves = 0;
+        $("moves").textContent = 0;
+        mc = grid("mem", 16, (i) => {
+          if (lock || open.includes(i) || mc[i].disabled) return;
+          mc[i].textContent = cards[i];
+          open.push(i);
+          if (open.length == 2) {
+            $("moves").textContent = ++moves;
+            const [a, b] = open;
+            if (cards[a] == cards[b]) {
+              // match: keep open
+              mc[a].disabled = mc[b].disabled = true;
+              open = [];
+              if (mc.every((x) => x.disabled))
+                alert("Won in " + moves + " moves");
+            } else {
+              // no match: flip back
+              lock = true;
+              setTimeout(() => {
+                mc[a].textContent = mc[b].textContent = "";
+                open = [];
+                lock = false;
+              }, 700);
+            }
+          }
+        });
+      }
+
+      // ---------- TIC-TAC-TOE ----------
+      let tb, turn, over, tc;
+      const W = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6],
+      ];
+      function newTTT() {
+        tb = Array(9).fill("");
+        turn = "X";
+        over = false;
+        $("tmsg").textContent = "";
+        tc = grid("ttt", 9, (i) => {
+          if (over || tb[i]) return;
+          tb[i] = tc[i].textContent = turn;
+          if (W.some((w) => w.every((k) => tb[k] == turn))) {
+            over = true;
+            $("tmsg").textContent = turn + " wins!";
+          } else if (tb.every((v) => v)) $("tmsg").textContent = "Draw";
+          else turn = turn == "X" ? "O" : "X";
+        });
+      }
+
+      newBingo();
+      newMem();
+      newTTT();
+    </script>
+  </body>
+</html>
